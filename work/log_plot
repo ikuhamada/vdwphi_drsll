@@ -1,0 +1,36 @@
+ *********************************
+ *** GENERATING THE VDW KERNEL ***
+ *********************************
+
+ PROGRAM STARTED AT: Apr 21 2012 22:51:55
+
+ NUMBER OF PROCESSORS :     8
+                                  
+ PARAMETERS USED:                 
+ Dmin   =      0.0000
+ Dmax   =     10.0000
+ ND     =  101
+ DELMIN =      0.0000
+ DELMAX =      0.9000
+ NDEL   =   10
+
+ GENERATING KERNEL DATA FOR PLOT
+
+ =======================================
+ DISTRIBUTION OF D AND DELTA PAIRS
+ ---------------------------------------
+ PE=       0 IDDS=       1 IDDE=     126
+ PE=       1 IDDS=     127 IDDE=     252
+ PE=       2 IDDS=     253 IDDE=     378
+ PE=       3 IDDS=     379 IDDE=     504
+ PE=       4 IDDS=     505 IDDE=     630
+ PE=       5 IDDS=     631 IDDE=     756
+ PE=       6 IDDS=     757 IDDE=     882
+ PE=       7 IDDS=     883 IDDE=    1010
+ =======================================
+
+ KERNEL IS WRITTEN TO phi_plot.dat
+ ELAPSE TIME : 15 MINUTES 45 SECONDS
+ WALL TIME   : 15 MINUTES 45 SECONDS
+
+ PROGRAM ENDED AT: Apr 21 2012 23:07:41

@@ -1,0 +1,192 @@
+!     ==================================================================
+      PROGRAM VDWPHIGEN
+!     ==--------------------------------------------------------------==
+      USE M_VDW_PHI
+      IMPLICIT NONE
+! ... Variables for D and delta values
+      INTEGER      :: mD=2200
+      INTEGER      :: mdel=100
+      REAL(KIND=8) :: Dmin=0.D0,Dmax=22.D0
+      REAL(KIND=8) :: delmin=0.D0,delmax=1.D0
+      INTEGER      :: iD,nD
+      INTEGER      :: idel,ndel
+      REAL(KIND=8) :: dD,ddel
+      REAL(KIND=8) :: D,del
+! ... d1=|r1-r2|q0(r1) and d2=|r1-r2|q0(r2)
+      REAL(KIND=8) :: d1,d2
+! ... vdW kernel phi
+      REAL(KIND=8), ALLOCATABLE :: phivdw(:,:)
+! ... fortran i/o
+      INTEGER :: STDIN=05,STDOUT=06,STDERR=00
+      INTEGER :: IOUT=20
+      CHARACTER(LEN=256) :: FNAME
+! ... command line arguments
+      INTEGER :: iargc,marg,narg
+      INTEGER :: len
+      CHARACTER(LEN=256) :: arg
+! ... option
+      INTEGER :: iplot=0
+! ... timing
+      REAL(KIND=4) :: ETIME
+      REAL(KIND=4) :: TIME(2)
+      REAL(KIND=8) :: TTT,T1,T2,WALL,ELAPS
+      INTEGER :: VAL(8)
+      CHARACTER(LEN=3) :: MON(12)
+      DATA MON/'Jan','Feb','Mar','Apr','May','Jun',&
+     &         'Jul','Aug','Sep','Oct','Nov','Dec'/
+!     ==--------------------------------------------------------------==
+      CALL DATE_AND_TIME(VALUES=VAL)
+! ... initialize the timer
+      TTT=ETIME(TIME)
+      T1=TIME(1)
+      T2=TIME(2)
+!
+! ... for a testing (start) ...
+!     Dmin=0.D0
+!     Dmax=30.D0
+!     mD=300
+!     delmin=0.D0
+!     delmax=0.9D0
+!     mdel=9
+!     delmin=0.D0
+!     delmax=0.5D0
+!     mdel=5
+! ... for a testing (start) ...
+!
+! ... command line arguments
+      narg=iargc()
+      marg=0
+      DO WHILE(marg<narg) 
+        marg=marg+1
+        CALL getarg(marg,arg)
+        len=len_trim(arg) 
+        IF(arg(1:len).eq.'-Dmax' .or.&
+     &     arg(1:len).eq.'-dmax')THEN
+          marg=marg+1
+          CALL getarg(marg,arg)
+          read(arg,*)Dmax 
+        ELSEIF(arg(1:len).eq.'-mD'.or.&
+     &     arg(1:len).eq.'-md')THEN
+          marg=marg+1
+          CALL getarg(marg,arg)
+          read(arg,*)mD
+        ELSEIF(arg(1:len).eq.'-delmax')THEN
+          marg=marg+1
+          CALL getarg(marg,arg)
+          read(arg,*)delmax 
+        ELSEIF(arg(1:len).eq.'-mdel')THEN
+          marg=marg+1
+          CALL getarg(marg,arg)
+          read(arg,*)mdel
+        ELSEIF(arg(1:len).eq.'-plot')THEN
+          iplot=1 
+        ELSEIF(arg(1:len).eq.'-h')THEN
+          WRITE(STDERR,'(A,A)')&
+     &    'Usage: vdwphigen_org: [-Dmax][Dmax] [-ddel][ddel] ',&
+     &    '[-mD][mD] [-mdel][mdel] [-plot] [-h]'
+          STOP
+        ENDIF
+      ENDDO  
+! ... Initialize D values
+      Dmax=DBLE(Dmax)
+      Dmin=DBLE(Dmin)
+      nD=mD+1
+      dD=(Dmax-Dmin)/DBLE(mD)
+! ... Initialize delta values    
+      delmax=DBLE(delmax)
+      delmin=DBLE(delmin)
+      ndel=mdel+1 
+      ddel=(delmax-delmin)/DBLE(mdel)
+! ... allocate
+      ALLOCATE(phivdw(nd,ndel))
+!     ==--------------------------------------------------------------==
+! ... print information
+      WRITE(STDOUT,'(A)')      ' *********************************' 
+      WRITE(STDOUT,'(A)')      ' *** GENERATING THE VDW KERNEL ***'
+      WRITE(STDOUT,'(A)')      ' *********************************' 
+      WRITE(STDOUT,'(A)')      '                                  '
+      WRITE(STDOUT,'(2A,I3,I5,I3,2(A,I2.2))')&
+     &' PROGRAM STARTED AT: ',&
+     &MON(VAL(2)),VAL(3),VAL(1),VAL(5),':',VAL(6),':',VAL(7)
+      WRITE(STDOUT,'(A)')      '                                  '
+      WRITE(STDOUT,'(A)')      ' PARAMETERS USED:                 '
+      WRITE(STDOUT,'(a,f12.4)')' Dmin   =',Dmin
+      WRITE(STDOUT,'(a,f12.4)')' Dmax   =',Dmax
+      WRITE(STDOUT,'(a,i5)')   ' ND     =',nD
+      WRITE(STDOUT,'(a,f12.4)')' DELMIN =',delmin
+      WRITE(STDOUT,'(a,f12.4)')' DELMAX =',delmax
+      WRITE(STDOUT,'(a,i5)')   ' NDEL   =',ndel
+!     ==--------------------------------------------------------------==
+!     == Calculation of the van der Waals kernel phi                  ==
+!     ==--------------------------------------------------------------==
+      CALL SET_AMESH
+      CALL SET_W_AB
+      CALL ALLOC_ARR_PHI
+      LOOP_DELTA: DO idel=1,ndel
+        del=delmin+DBLE(idel-1)*ddel
+        LOOP_D: DO iD=1,nD
+          D=Dmin+DBLE(iD-1)*dD
+! ... set d values
+          d1=D*(1.D0+del)
+          d2=D*(1.D0-del)
+          if(d1.le.SMALL .and. d2.le.SMALL)then
+            cycle LOOP_D
+          endif
+          phivdw(iD,idel)=phival(d1,d2) 
+        ENDDO LOOP_D
+      ENDDO LOOP_DELTA
+!     ==--------------------------------------------------------------==
+!     == Output the van der Waals kernel phi (for plotting)           ==
+!     ==--------------------------------------------------------------==
+      IF(iplot.eq.0)THEN
+        FNAME='kernel.dat'
+        OPEN(IOUT,FILE=FNAME,STATUS='UNKNOWN')
+        WRITE(IOUT,'(E24.5)')Dmax,' : Dmax'
+        WRITE(IOUT,'(I24)')  mD,  ' : Mesh_D'
+        WRITE(IOUT,'(I24)')  mdel,  ' : Mesh_delta'
+        DO iD=1,nD
+          DO idel=1,ndel
+            D=Dmin+DBLE(iD-1)*dD
+            del=delmin+DBLE(idel-1)*ddel
+            WRITE(IOUT,'(2F4.2,E24.5)')D,del,phivdw(iD,idel)
+          ENDDO
+        ENDDO
+        CLOSE(IOUT)
+      ELSEIF(iplot.eq.1)THEN
+! ... output phi is mutiplied by 4*pi*D**2
+        FNAME='phi_plot.dat'
+        OPEN(IOUT,FILE=FNAME,STATUS='UNKNOWN')
+        DO idel=1,ndel
+          del=delmin+DBLE(idel-1)*ddel
+          WRITE(IOUT,'(a,e12.4)')'# delta=',del
+          WRITE(IOUT,'(a,a)')&
+     &   '#D           ','4*PI*D**2*PHI'
+          DO iD=1,nD      
+            D=Dmin+DBLE(iD-1)*dD
+            d1=D*(1.D0+del)
+            d2=D*(1.D0-del)
+            WRITE(IOUT,'(2(1x,e12.4))') D, 4.D0*pi*D*D*phivdw(iD,idel)
+          ENDDO
+          WRITE(IOUT,'(/,/)')
+        ENDDO
+        CLOSE(IOUT)
+      ENDIF
+      DEALLOCATE(phivdw)
+!     ==--------------------------------------------------------------==
+      CALL DEALLOC_ARR_PHI
+!     ==--------------------------------------------------------------==
+! ... finalize time
+      TTT=ETIME(TIME)
+      ELAPS=TIME(1)-T1
+      WALL=TIME(2)-T2
+      WALL=WALL+ELAPS
+      WRITE(STDOUT,'(/,A,F8.4,A)')&
+     &' ELAPSE TIME : ',ELAPS,' SEC.'
+      WRITE(STDOUT,'(/,A,F8.4,A)')&
+     &' WALL TIME   : ',WALL, ' SEC.'
+!     WRITE(STDOUT,'(/,A)')      ' *** PROGRAM ENDS SUCCESSFULLY *** '
+      CALL DATE_AND_TIME(VALUES=VAL)
+!     ==--------------------------------------------------------------==
+      STOP
+      END PROGRAM VDWPHIGEN
+!     ==================================================================

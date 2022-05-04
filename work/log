@@ -1,0 +1,35 @@
+ *********************************
+ *** GENERATING THE VDW KERNEL ***
+ *********************************
+
+ PROGRAM STARTED AT: Apr 21 2012 23:07:42
+
+ NUMBER OF PROCESSORS :     8
+                                  
+ PARAMETERS USED:                 
+ Dmin   =      0.0000
+ Dmax   =     22.0000
+ ND     = 2201
+ DELMIN =      0.0000
+ DELMAX =      1.0000
+ NDEL   =  101
+
+ GENERATING KERNEL DATA
+
+ =======================================
+ DISTRIBUTION OF D AND DELTA PAIRS
+ ---------------------------------------
+ PE=       0 IDDS=       1 IDDE=   27787
+ PE=       1 IDDS=   27788 IDDE=   55574
+ PE=       2 IDDS=   55575 IDDE=   83361
+ PE=       3 IDDS=   83362 IDDE=  111148
+ PE=       4 IDDS=  111149 IDDE=  138935
+ PE=       5 IDDS=  138936 IDDE=  166722
+ PE=       6 IDDS=  166723 IDDE=  194509
+ PE=       7 IDDS=  194510 IDDE=  222301
+ =======================================
+
+ ELAPSE TIME :   65 HOURS 51 MINUTES 27 SECONDS
+ WALL TIME   :   65 HOURS 51 MINUTES 27 SECONDS
+
+ PROGRAM ENDED AT: Apr 24 2012 16:58:56
